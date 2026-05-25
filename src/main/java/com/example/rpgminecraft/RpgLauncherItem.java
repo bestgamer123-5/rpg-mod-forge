@@ -1,49 +1,49 @@
 package com.example.rpgminecraft;
 
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.stat.Stats;
-import net.minecraft.util.Hand;
-import net.minecraft.util.TypedActionResult;
-import net.minecraft.world.World;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.stats.Stats;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
 public class RpgLauncherItem extends Item {
     private final RpgRocketEntity.RocketMode rocketMode;
 
-    public RpgLauncherItem(Settings settings, RpgRocketEntity.RocketMode rocketMode) {
-        super(settings);
+    public RpgLauncherItem(Properties properties, RpgRocketEntity.RocketMode rocketMode) {
+        super(properties);
         this.rocketMode = rocketMode;
     }
 
     @Override
-    public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
-        ItemStack itemStack = user.getStackInHand(hand);
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack itemStack = player.getItemInHand(hand);
 
-        if (!world.isClient) {
-            RpgRocketEntity rocket = new RpgRocketEntity(world, user, rocketMode);
-            rocket.setVelocity(user, user.getPitch(), user.getYaw(), 0.0f, rocketMode.velocity, 0.4f);
-            world.spawnEntity(rocket);
+        if (!level.isClientSide) {
+            RpgRocketEntity rocket = new RpgRocketEntity(level, player, rocketMode);
+            rocket.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0f, rocketMode.velocity, 0.4f);
+            level.addFreshEntity(rocket);
         }
 
-        world.playSound(
+        level.playSound(
                 null,
-                user.getX(),
-                user.getY(),
-                user.getZ(),
-                SoundEvents.ENTITY_FIREWORK_ROCKET_LAUNCH,
-                SoundCategory.PLAYERS,
+                player.getX(),
+                player.getY(),
+                player.getZ(),
+                SoundEvents.FIREWORK_ROCKET_LAUNCH,
+                SoundSource.PLAYERS,
                 0.8f,
-                0.8f + world.random.nextFloat() * 0.4f
+                0.8f + level.random.nextFloat() * 0.4f
         );
 
-        user.incrementStat(Stats.USED.getOrCreateStat(this));
-        EquipmentSlot slot = hand == Hand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND;
-        itemStack.damage(1, user, entity -> entity.sendEquipmentBreakStatus(slot));
+        player.awardStat(Stats.ITEM_USED.get(this));
+        EquipmentSlot slot = hand == InteractionHand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND;
+        itemStack.hurtAndBreak(1, player, entity -> entity.broadcastBreakEvent(slot));
 
-        return TypedActionResult.success(itemStack, world.isClient());
+        return InteractionResultHolder.sidedSuccess(itemStack, level.isClientSide());
     }
 }
