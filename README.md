@@ -1,10 +1,10 @@
-# RPG Minecraft Mod
+# RPG Minecraft Mod (Forge)
 
-A starter Fabric mod that adds an **RPG Sword**.
+A Minecraft Forge mod that adds an **RPG Sword** and launcher weapons.
 
 ## Features
 - Adds a craftable RPG Sword.
-- Killing mobs with the RPG Sword grants bonus XP.
+- Adds RPG, Nuke, and Hunter launchers.
 
 ## Build
 ```bash
@@ -15,4 +15,3 @@ A starter Fabric mod that adds an **RPG Sword**.
 ```bash
 ./gradlew runClient
 ```
-# rpg-mod
