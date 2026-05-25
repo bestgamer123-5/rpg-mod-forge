@@ -1,16 +1,16 @@
 package com.example.rpgminecraft;
 
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.passive.AnimalEntity;
-import net.minecraft.entity.projectile.thrown.ThrownItemEntity;
-import net.minecraft.item.Item;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.world.World;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.projectile.ThrowableItemProjectile;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.HitResult;
 
-public class RpgRocketEntity extends ThrownItemEntity {
+public class RpgRocketEntity extends ThrowableItemProjectile {
     private static final String MODE_NBT = "RocketMode";
     private RocketMode rocketMode = RocketMode.STANDARD;
 
@@ -28,49 +28,50 @@ public class RpgRocketEntity extends ThrownItemEntity {
         }
     }
 
-    public RpgRocketEntity(EntityType<? extends RpgRocketEntity> entityType, World world) {
-        super(entityType, world);
+    public RpgRocketEntity(EntityType<? extends RpgRocketEntity> entityType, Level level) {
+        super(entityType, level);
     }
 
-    public RpgRocketEntity(World world, LivingEntity owner, RocketMode rocketMode) {
-        super(RpgMinecraftMod.RPG_ROCKET, owner, world);
+    public RpgRocketEntity(Level level, LivingEntity owner, RocketMode rocketMode) {
+        super(RpgMinecraftMod.RPG_ROCKET.get(), owner, level);
         this.rocketMode = rocketMode;
     }
 
     @Override
     protected Item getDefaultItem() {
-        return RpgMinecraftMod.RPG_LAUNCHER;
+        return RpgMinecraftMod.RPG_LAUNCHER.get();
     }
 
     @Override
     public void tick() {
         super.tick();
 
-        if (this.getWorld().isClient) {
-            this.getWorld().addParticle(ParticleTypes.SMOKE, this.getX(), this.getY(), this.getZ(), 0, 0, 0);
+        if (this.level().isClientSide) {
+            this.level().addParticle(ParticleTypes.SMOKE, this.getX(), this.getY(), this.getZ(), 0, 0, 0);
         }
     }
 
     @Override
-    protected void onCollision(HitResult hitResult) {
-        super.onCollision(hitResult);
+    protected void onHit(HitResult hitResult) {
+        super.onHit(hitResult);
 
-        if (!this.getWorld().isClient) {
+        if (!this.level().isClientSide) {
             if (rocketMode == RocketMode.HUNTER) {
-                this.getWorld().getEntitiesByClass(
-                        AnimalEntity.class,
-                        this.getBoundingBox().expand(6.0),
+                this.level().getEntitiesOfClass(
+                        Animal.class,
+                        this.getBoundingBox().inflate(6.0),
                         animal -> true
-                ).forEach(animal -> animal.damage(this.getDamageSources().explosion(this, this.getOwner()), 20.0f));
+                ).forEach(animal -> animal.hurt(this.damageSources().explosion(this, this.getOwner()), 20.0f));
             }
 
-            this.getWorld().createExplosion(
+            Level.ExplosionInteraction explosionInteraction = Level.ExplosionInteraction.NONE;
+            this.level().explode(
                     this,
                     this.getX(),
                     this.getY(),
                     this.getZ(),
                     rocketMode.explosionPower,
-                    World.ExplosionSourceType.MOB
+                    explosionInteraction
             );
             this.discard();
         }
@@ -82,16 +83,16 @@ public class RpgRocketEntity extends ThrownItemEntity {
     }
 
     @Override
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-        nbt.putString(MODE_NBT, rocketMode.name());
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putString(MODE_NBT, rocketMode.name());
     }
 
     @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        if (nbt.contains(MODE_NBT)) {
-            this.rocketMode = RocketMode.valueOf(nbt.getString(MODE_NBT));
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        if (tag.contains(MODE_NBT)) {
+            this.rocketMode = RocketMode.valueOf(tag.getString(MODE_NBT));
         }
     }
 }
