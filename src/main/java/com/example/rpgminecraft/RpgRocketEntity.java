@@ -71,6 +71,7 @@ public class RpgRocketEntity extends ThrowableItemProjectile {
                     this.getY(),
                     this.getZ(),
                     rocketMode.explosionPower,
+                    Level.ExplosionInteraction.NONE
                     Explosion.BlockInteraction.KEEP
             );
             this.discard();
