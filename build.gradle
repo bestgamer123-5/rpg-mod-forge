@@ -1,13 +1,48 @@
-plugins {
-    id 'fabric-loom' version '1.6-SNAPSHOT'
-    id 'maven-publish'
+buildscript {
+    repositories {
+        maven { url = 'https://files.minecraftforge.net/maven' }
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:6.0.37'
+    }
 }
+
+plugins {
+    id 'eclipse'
+    id 'idea'
+}
+
+apply plugin: 'net.minecraftforge.gradle'
 
 version = project.mod_version
 group = project.maven_group
 
-base {
-    archivesName = project.archives_base_name
+base { archivesName = project.archives_base_name }
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
+}
+
+minecraft {
+    mappings channel: 'official', version: minecraft_version
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            mods {
+                forge { source sourceSets.main }
+            }
+        }
+        client {}
+        server {}
+    }
 }
 
 repositories {
@@ -15,43 +50,20 @@ repositories {
 }
 
 dependencies {
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-}
-
-tasks.withType(JavaCompile).configureEach {
-    it.options.release = 21
-}
-
-java {
-    withSourcesJar()
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 }
 
 processResources {
-    inputs.property "version", project.version
-
-    filesMatching("fabric.mod.json") {
-        expand "version": project.version
+    inputs.property 'version', project.version
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand([
+                version: project.version,
+                mod_id: project.mod_id,
+                mod_name: project.mod_name,
+                mod_description: project.mod_description,
+                forge_version: project.forge_version,
+                loader_version_range: project.loader_version_range,
+                minecraft_version_range: project.minecraft_version_range
+        ])
     }
-}
-
-jar {
-    from("LICENSE") {
-        rename { "${it}_${project.archives_base_name}" }
-    }
-}
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-        }
-    }
-}
-tasks.register("run") {
-    dependsOn("runClient")
 }
