@@ -65,12 +65,14 @@ public class RpgRocketEntity extends ThrowableItemProjectile {
                 ).forEach(animal -> animal.hurt(this.damageSources().explosion(this, this.getOwner()), 20.0f));
             }
 
+            Level.ExplosionInteraction explosionInteraction = Level.ExplosionInteraction.NONE;
             this.level().explode(
                     this,
                     this.getX(),
                     this.getY(),
                     this.getZ(),
                     rocketMode.explosionPower,
+                    explosionInteraction
                     Level.ExplosionInteraction.NONE
                     Explosion.BlockInteraction.KEEP
             );
