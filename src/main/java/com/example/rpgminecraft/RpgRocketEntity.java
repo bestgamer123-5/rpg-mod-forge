@@ -8,6 +8,7 @@ import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.projectile.ThrowableItemProjectile;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.Explosion;
 import net.minecraft.world.phys.HitResult;
 
 public class RpgRocketEntity extends ThrowableItemProjectile {
@@ -72,6 +73,8 @@ public class RpgRocketEntity extends ThrowableItemProjectile {
                     this.getZ(),
                     rocketMode.explosionPower,
                     explosionInteraction
+                    Level.ExplosionInteraction.NONE
+                    Explosion.BlockInteraction.KEEP
             );
             this.discard();
         }
